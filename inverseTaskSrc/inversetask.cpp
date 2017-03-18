@@ -1,21 +1,20 @@
-#include "inversetask.h"
+#include "inverseTaskHeaders/inversetask.h"
 #include <cmath>
 
 
-inverseTask::inverseTask()
+InverseTask::InverseTask()
 {
 
 }
 
 
 
-void inverseTask::getA(vector<cube> cu, vector<receiver> receivers)
+void InverseTask::computeA(vector<Cube> &cu, vector<Receiver> &receivers)
 {
     size_t size = cu.size();
     A.resize(size);
     for(size_t i = 0; i < size; ++i)
         A[i].resize(size, 0);
-
 
     for(size_t i = 0; i < receivers.size(); ++i)
     {
@@ -27,15 +26,14 @@ void inverseTask::getA(vector<cube> cu, vector<receiver> receivers)
             }
         }
     }
-
 }
 
 
 
-void inverseTask::getb(vector<cube> cu, vector<receiver> receivers)
+void InverseTask::computeB(vector<Cube>& cu, vector<Receiver>& receivers)
 {
     size_t size = cu.size();
-    b.resize(size, 0);
+    b.resize(size);
 
     for(size_t i = 0; i < receivers.size(); ++i)
         for(size_t q = 0; q < size; ++q)
@@ -44,18 +42,18 @@ void inverseTask::getb(vector<cube> cu, vector<receiver> receivers)
 
 
 
-vector< double > inverseTask::execInverseTask(vector<cube> cu, vector<receiver> receivers)
+vector< double > InverseTask::execInverseTask(vector<Cube> &cu, vector<Receiver> &receivers)
 {
-    getA(cu, receivers);
-    getb(cu, receivers);
+    computeA(cu, receivers);
+    computeB(cu, receivers);
     toLU();
-    findP();
+    computeP();
     return p;
 }
 
 
 
-double inverseTask::getFunc(vector<cube> cu, vector<receiver> receivers)
+double InverseTask::getFunc(vector<Cube> &cu, vector<Receiver> &receivers)
 {
     double func = 0;
     for(size_t i = 0; i < receivers.size(); ++i)
@@ -74,13 +72,11 @@ double inverseTask::getFunc(vector<cube> cu, vector<receiver> receivers)
 
 
 
-vector< double > inverseTask::execWithRegular(
-        vector<cube> cu, vector<receiver> receivers,
-        double alpha, double gamma,
-        double percentage, double gammaD, int& itt)
+vector< double > InverseTask::execWithRegular(vector<Cube>& cu, vector<Receiver>& receivers,
+        InverseTaskProperties& properties, int& itt)
 {
     itt = 0;
-    initAlphaGamma(alpha, gamma, cu.size(), gammaD);
+    initAlphaGamma(properties.alpha, properties.gamma, cu.size(), properties.gammaStep);
     double func;    // функционал
     execInverseTask(cu, receivers);
     func = getFunc(cu, receivers);
@@ -92,25 +88,25 @@ vector< double > inverseTask::execWithRegular(
             break;
         applyGamma(cu);
         toLU();
-        findP();
+        computeP();
         itt++;
     }
-    while(checkForOver(percentage, func, cu, receivers));
+    while(checkForOver(properties.percentage, func, cu, receivers));
     return p;
 }
 
 
-bool inverseTask::checkCubeForRegular(vector<cube>& cu, cube& oneCU)
+bool InverseTask::checkCubeForRegular(vector<Cube>& cu, Cube& oneCU)
 {
     double tempDiff = 0;
-    size_t count = 0;
+    int count = 0;
 
-    for(size_t i = 0; i < 6; ++i)
+    for(int i = 0; i < 6; ++i)
     {
-        if(oneCU.neighbours[i] != -1)
+        if(oneCU.getNeighbour(i) != -1)
         {
             tempDiff += abs(oneCU.getDensity()
-                            - cu[oneCU.neighbours[i]].getDensity());
+                            - cu[oneCU.getNeighbour(i)].getDensity());
             ++count;
         }
     }
@@ -122,7 +118,7 @@ bool inverseTask::checkCubeForRegular(vector<cube>& cu, cube& oneCU)
 }
 
 
-bool inverseTask::changeGamma(vector<cube> &cu)
+bool InverseTask::changeGamma(vector<Cube> &cu)
 {
     bool changed = false;
     for(size_t i = 0; i < cu.size(); ++i)
@@ -130,22 +126,22 @@ bool inverseTask::changeGamma(vector<cube> &cu)
         if(checkCubeForRegular(cu, cu[i]))
         {
             changed = true;
-            gamma[i] += gammaD;
+            gamma[i] += gammaStep;
         }
     }
     return true;
 }
 
 
-void inverseTask::initAlphaGamma(double alpha, double gamma, size_t gammaSize, double gammaD)
+void InverseTask::initAlphaGamma(double alpha, double gamma, size_t gammaSize, double gammaD)
 {
-    inverseTask::alpha = alpha;
-    inverseTask::gammaD = gammaD;
-    inverseTask::gamma.resize(gammaSize, gamma);
+    InverseTask::alpha = alpha;
+    InverseTask::gammaStep = gammaD;
+    InverseTask::gamma.resize(gammaSize, gamma);
 }
 
 
-void inverseTask::findP()
+void InverseTask::computeP()
 {
     size_t size = b.size();
     vector< double > bw = b;
@@ -161,7 +157,7 @@ void inverseTask::findP()
     }
 
     // U
-    for(int i = size - 1; i >= 0; --i)
+    for(size_t i = size - 1; i >= 0; --i)
     {
         temp = 0;
         for(size_t k = size - 1; k > i; --k)
@@ -172,7 +168,7 @@ void inverseTask::findP()
 
 
 
-double inverseTask::l(int i, int j)
+double InverseTask::l(int i, int j)
 {
     double temp = 0;
     for(size_t k = 0; k < i; ++k)
@@ -184,7 +180,7 @@ double inverseTask::l(int i, int j)
 
 
 
-double inverseTask::u(int i, int j)
+double InverseTask::u(int i, int j)
 {
     double temp = 0;
     for(size_t k = 0; k < i; ++k)
@@ -195,19 +191,19 @@ double inverseTask::u(int i, int j)
 
 
 
-void inverseTask::applyGamma(vector<cube> cu)
+void InverseTask::applyGamma(vector<Cube> &cu)
 {
     for(size_t i = 0; i < cu.size(); ++i)
     {
         double sum = 0;
-        size_t count = 0;
-        for(size_t j = 0; j < 6; ++j)
+        int count = 0;
+        for(int j = 0; j < 6; ++j)
         {
-            if(cu[i].neighbours[j] != -1)
+            if(cu[i].getNeighbour(j) != -1)
             {
-                A[i][cu[i].neighbours[j]] -= gamma[i] + gamma[cu[i].neighbours[j]];
+                A[i][cu[i].getNeighbour(j)] -= gamma[i] + gamma[cu[i].getNeighbour(j)];
                 ++count;
-                sum += gamma[cu[i].neighbours[j]];
+                sum += gamma[cu[i].getNeighbour(j)];
             }
         }
         A[i][i] += gamma[i] * count + sum + alpha;
@@ -215,9 +211,9 @@ void inverseTask::applyGamma(vector<cube> cu)
 }
 
 
-bool inverseTask::checkForOver(double percentage,
-                               double func, vector<cube> &cu,
-                               vector<receiver> &receivers)
+bool InverseTask::checkForOver(double percentage,
+                               double func, vector<Cube> &cu,
+                               vector<Receiver> &receivers)
 {
     double tempFunc = getFunc(cu, receivers);
     if((tempFunc - func) > func / 100.f * percentage)
@@ -227,7 +223,7 @@ bool inverseTask::checkForOver(double percentage,
 }
 
 
-void inverseTask::toLU()
+void InverseTask::toLU()
 {
     size_t size = A.size();
 //    Afact.resize(size);
@@ -235,8 +231,8 @@ void inverseTask::toLU()
 //        Afact[i].resize(size);
 
     Afact = A;
-    for(size_t i = 0; i < size; ++i)
-        for(size_t j = i; j < size; ++j)
+    for(int i = 0; i < size; ++i)
+        for(int j = i; j < size; ++j)
         {
             Afact[i][j] = u(i,j);
             if(i != j)

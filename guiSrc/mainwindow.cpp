@@ -1,4 +1,5 @@
-#include "mainwindow.h"
+#include "guiHeaders/mainwindow.h"
+#include "inverseTaskHeaders/inversetaskproperties.h"
 #include "ui_mainwindow.h"
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -68,10 +69,7 @@ void MainWindow::on_buttonReDo_clicked()
 
 void MainWindow::on_execDirectButton_clicked()
 {
-    ui->mainWindow->ar.dTask.numX = ui->numXBox->value();
-    ui->mainWindow->ar.dTask.numY = ui->numYBox->value();
-    ui->mainWindow->ar.dTask.execDirectTask(ui->mainWindow->ar.cubes, ui->mainWindow->ar.xMin, ui->mainWindow->ar.xMax,
-                                            ui->mainWindow->ar.yMin, ui->mainWindow->ar.yMax, ui->mainWindow->ar.zMax);
+    ui->mainWindow->ar.executeDirectTask(ui->numXBox->value(), ui->numYBox->value());
 }
 
 
@@ -99,19 +97,20 @@ void MainWindow::on_checkGauss_clicked(bool checked)
 void MainWindow::on_execInverseButton_clicked()
 {
     ui->mainWindow2->ar = ui->mainWindow->ar;
-    std::vector< cube >& cubes = ui->mainWindow2->ar.cubes;
-    std::vector< receiver >& receivers = ui->mainWindow2->ar.dTask.receivers;
+    std::vector< Cube >& cubes = ui->mainWindow2->ar.cubes;
+    std::vector< Receiver >& receivers = ui->mainWindow2->ar.dTask.receivers;
 
     if(ui->checkIsReg->isChecked())
     {
+        InverseTaskProperties propeties;
         int itt;
-        double alpha = ui->alphaBox->value();
-        double gamma = ui->gammaBox->value();
-        double percentage = ui->percBox->value();
-        double gammaD = ui->gammaDBox->value();
-        std::vector< double >& newP = ui->mainWindow2->ar.iTask.execWithRegular(
+        propeties.alpha = ui->alphaBox->value();
+        propeties.gamma = ui->gammaBox->value();
+        propeties.percentage = ui->percBox->value();
+        propeties.gammaStep = ui->gammaDBox->value();
+        std::vector< double > newP = ui->mainWindow2->ar.iTask.execWithRegular(
                     cubes, receivers,
-                    alpha, gamma, percentage, gammaD, itt);
+                    propeties, itt);
         ui->mainWindow2->ar.setNewP(newP);
         ui->labIter->setText(QString::number(itt));
     }

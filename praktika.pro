@@ -26,25 +26,32 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 QMAKE_LIBS += opengl32.lib
 
-SOURCES += main.cpp\
-        mainwindow.cpp \
-    cube.cpp \
-    subdomain.cpp \
-    widget3d.cpp \
-    directtask.cpp \
-    receiver.cpp \
-    area.cpp \
-    inversetask.cpp \
-    widget3dsecond.cpp
+SOURCES += areaSrc/area.cpp \
+    areaSrc/cube.cpp \
+    areaSrc/receiver.cpp \
+    areaSrc/subdomain.cpp \
+    directTaskSrc/directtask.cpp \
+    guiSrc/mainwindow.cpp \
+    guiSrc/widget3d.cpp \
+    guiSrc/widget3dsecond.cpp \
+    inverseTaskSrc/inversetask.cpp \
+    guiSrc/main.cpp
 
-HEADERS  += mainwindow.h \
-    cube.h \
-    area.h \
-    subdomain.h \
-    widget3d.h \
-    directtask.h \
-    receiver.h \
-    inversetask.h \
-    widget3dsecond.h
+HEADERS  += directTaskHeaders/directtask.h \
+    areaHeaders/receiver.h \
+    areaHeaders/areaproperties.h \
+    areaHeaders/area.h \
+    areaHeaders/cube.h \
+    areaHeaders/receiver.h \
+    areaHeaders/subdomain.h \
+    directTaskHeaders/directtask.h \
+    guiHeaders/widget3dsecond.h \
+    guiHeaders/mainwindow.h \
+    guiHeaders/widget3d.h \
+    inverseTaskHeaders/inversetask.h \
+    inverseTaskHeaders/inversetaskproperties.h \
+    Utility/Index3d.h
 
 FORMS    += mainwindow.ui
+
+DISTFILES +=

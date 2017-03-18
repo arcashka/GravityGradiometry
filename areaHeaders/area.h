@@ -1,56 +1,55 @@
 #ifndef AREA_H
 #define AREA_H
-#include "subdomain.h"
-#include "directtask.h"
-#include "inversetask.h"
+#include "areaHeaders/subdomain.h"
+#include "areaHeaders/areaproperties.h"
+#include "directTaskHeaders/directtask.h"
+#include "inverseTaskHeaders/inversetask.h"
+#include "inverseTaskHeaders/inversetaskproperties.h"
 #include <limits>
 
-class area
-{
-private:                    // количество разбиений по каждой из координат
-    double calcDensity(std::vector<subdomain> subs, cube cu);
-public:
-    size_t xNum, yNum, zNum;
-    double xMin, xMax, yMin, yMax, zMin, zMax;
-    directTask dTask;
-    inverseTask iTask;
-    void setNewP(vector< double > p);
-    float getColor(cube cu);
-                            // кубы, что в ней
-    std::vector<cube> cubes;
-                            // переменная для widget3d
-    bool drawLines = true;
-    bool gaussPointsDraw = false;
-                            // средняя плотность, чтобы раскрашивать
-    double avgDensity;
-    double maxDensity = 0;
-    double minDensity = 0;
+using namespace std;
 
-                            // выполнение прямой задачи
-                            // строится сетка из numX на numY гравиметров
+class Area
+{
+private:
+    vector<Cube> ar.getCubes();
+    DirectTask dTask;
+    InverseTask iTask;
+
+    double calcDensity(vector<Subdomain> subs, Cube cu);
+
+    // Дополнительные данные
+    AreaProperties properties;
+
+public:
+    Area();
+    void setNewP(vector< double > p);
+    vector<Cube>& getCubes() { return ar.getCubes(); }
+    void executeDirectTask(int numX, int numY);
+    vector< double >& executeInverseTaskRegularisation(InverseTaskProperties& properties, int &itt);
+    vector< double >& executeInverseTask();
+
     template<typename T>
     bool generateFromStream(T & ifs)
     {
         maxDensity = 0;
         minDensity = std::numeric_limits<double>::max();
         avgDensity = 0;
-        cubes.clear();
-        std::vector<subdomain> subs;
+        ar.getCubes().clear();
+        std::vector<Subdomain> subs;
         double tempDensity;
-
 
         // параметры для всей расчётной области
         // минимальные / максимальные значения по каждой из координат
-        ifs >> xMin >> xMax >> yMin >> yMax >> zMin >> zMax;
+        ifs >> properties.xMin >> properties.xMax
+                >> properties.yMin >> properties.yMax
+                >> properties.zMin >> properties.zMax;
 
         // количество разбиений по каждой из координат
-        ifs >> xNum >> yNum >> zNum;
-
-
-
+        ifs >> properties.xNum >> properties.yNum >> properties.zNum;
 
         // количество разных подобластей
-        size_t incNum;
+        int incNum;
         ifs >> incNum;
         // записываем эти области
         subs.resize(incNum);
@@ -58,30 +57,27 @@ public:
             ifs >> subs[i];
         int ittDens = 0;
 
-
         // посчитали величину шага по каждой координате
-        double hx = (xMax - xMin) / static_cast<double>(xNum),
-               hy = (yMax - yMin) / static_cast<double>(yNum),
-               hz = (zMax - zMin) / static_cast<double>(zNum);
-
-
+        double hx = (properties.xMax - properties.xMin) / static_cast<double>(properties.xNum),
+               hy = (properties.yMax - properties.yMin) / static_cast<double>(properties.yNum),
+               hz = (properties.zMax - properties.zMin) / static_cast<double>(properties.zNum);
 
         // добавляем все кубы
-        size_t numb = 0;
-        for(size_t i = 0; i < xNum; ++i)
+        int numb = 0;
+        for(int i = 0; i < properties.xNum; ++i)
         {
 
-            double xCurr = xMin + hx * static_cast<double>(i);
-            for(size_t j = 0; j < yNum; ++j)
+            double xCurr = properties.xMin + hx * static_cast<double>(i);
+            for(int j = 0; j < properties.yNum; ++j)
             {
 
-                double yCurr = yMin + hy * static_cast<double>(j);
-                for(size_t k = 0; k < zNum; ++k)
+                double yCurr = properties.yMin + hy * static_cast<double>(j);
+                for(int k = 0; k < properties.zNum; ++k)
                 {
 
                     tempDensity = 0;
-                    double zCurr = zMin + hz * static_cast<double>(k);
-                    cube temp = cube(xCurr, yCurr, zCurr, xMin, yMin, zMin, hx, hy, hz);
+                    double zCurr = properties.zMin + hz * static_cast<double>(k);
+                    Cube temp = Cube(xCurr, yCurr, zCurr, xMin, yMin, zMin, hx, hy, hz);
                     tempDensity = calcDensity(subs, temp);
                     temp.setDensity(tempDensity);
                     if(tempDensity > 1E-1)
@@ -100,8 +96,8 @@ public:
                     if(k > 0)           temp.neighbours[2] = numb - 1;                  // нижний
                     if(k < zNum - 1)    temp.neighbours[3] = numb + 1;                  // верхний
                     if(j < yNum - 1)    temp.neighbours[4] = numb + zNum;               // дальний
-                    if(i < xNum - 1)    temp.neighbours[5] = numb + yNum * zNum;
-                    cubes.push_back(temp);
+                    if(i < xNum - 1)    temp.neighbours[5] = numb + yNum * zNum;        // правый
+                    ar.getCubes().push_back(temp);
                     ++numb;
 
                 }

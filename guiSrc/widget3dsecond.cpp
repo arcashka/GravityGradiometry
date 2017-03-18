@@ -1,4 +1,4 @@
-#include "Widget3dSecond.h"
+#include "guiHeaders/Widget3dSecond.h"
 #include <limits>
 
 
@@ -56,7 +56,7 @@ void Widget3dSecond::paintGlProj()
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    if(ar.cubes.size() == 0) return;
+    if(ar.getCubes().size() == 0) return;
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -74,13 +74,13 @@ void Widget3dSecond::paintGlProj()
     double eps = 1.0;
 
 
-    for(size_t i = 0; i < ar.cubes.size(); i++)
+    for(size_t i = 0; i < ar.getCubes().size(); i++)
     {
 
-        if(check(ar.cubes[i]))
+        if(check(ar.getCubes()[i]))
         {
             // цвет
-            double color = ar.getColor(ar.cubes[i]);
+            double color = 0.5f;//ar.getColor(ar.cubes[i]);
             glColor3f(color, color, color);
 
 
@@ -366,7 +366,7 @@ void Widget3dSecond::paintGlProj()
 }
 
 
-bool Widget3dSecond::check(cube cu)
+bool Widget3dSecond::check(Cube cu)
 {
     switch(side)
     {
